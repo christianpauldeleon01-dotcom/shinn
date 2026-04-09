@@ -31,7 +31,7 @@ class UserProfile extends HiveObject {
   /// Create a default profile
   factory UserProfile.defaultProfile() {
     return UserProfile(
-      name: 'Tirta Mandira',
+      name: 'Christian Paul',
       location: 'Bali, Indonesia',
       activities: '🏃 Runner | 🚴 Cyclist | 🧗 Climber',
       weight: 70.0,

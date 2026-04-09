@@ -182,7 +182,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                   child: Text(
                     _profile.name.isNotEmpty ? _profile.name[0].toUpperCase() : 'U',
                     style: NeonTypography.headlineMedium.copyWith(
-                      color: isDark ? NeonColors.background : LightModeColors.secondary,
+                      color: isDark ? NeonColors.background : LightModeColors.primary,
                     ),
                   ),
                 ),
@@ -378,6 +378,7 @@ class _ProgressScreenState extends State<ProgressScreen>
   }
 
   Widget _buildWeeklyGoal() {
+    final isDark = currentThemeMode == TrakThemeMode.dark;
     double weeklyKm = 0;
     for (var activity in _activities) {
       if (activity.date.isAfter(_weekDates.first.subtract(const Duration(days: 1)))) {
@@ -428,7 +429,9 @@ class _ProgressScreenState extends State<ProgressScreen>
                     child: Text(
                       '${(progress * 100).toInt()}%',
                       style: NeonTypography.labelMedium.copyWith(
-                        color: progress >= 1.0 ? NeonColors.background : NeonColors.textPrimary,
+                        color: progress >= 1.0 
+                            ? NeonColors.textOnPrimaryGradient 
+                            : NeonColors.textPrimary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),

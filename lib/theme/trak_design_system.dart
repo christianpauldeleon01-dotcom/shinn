@@ -133,7 +133,7 @@ class NeonColors {
           end: Alignment.bottomRight,
         )
       : const LinearGradient(
-          colors: [Color(0xFFFFFFFF), Color(0xFFE0E0E0)],
+          colors: [Color(0xFF000000), Color(0xFF333333)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );
@@ -141,10 +141,10 @@ class NeonColors {
   // Text color on gradient - opposite of gradient colors
   static Color get textOnPrimaryGradient => currentThemeMode == TrakThemeMode.dark 
       ? const Color(0xFF000000) 
-      : const Color(0xFF000000);
+      : const Color(0xFFFFFFFF);
   static Color get subtextOnPrimaryGradient => currentThemeMode == TrakThemeMode.dark 
       ? const Color(0xFF000000).withValues(alpha: 0.7)
-      : const Color(0xFF000000).withValues(alpha: 0.7);
+      : const Color(0xFFFFFFFF).withValues(alpha: 0.7);
   
   static LinearGradient get accentGradient => currentThemeMode == TrakThemeMode.dark 
       ? const LinearGradient(
@@ -153,7 +153,7 @@ class NeonColors {
           end: Alignment.bottomRight,
         )
       : const LinearGradient(
-          colors: [Color(0xFF333333), Color(0xFF000000)],
+          colors: [Color(0xFF000000), Color(0xFF1A1A1A)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );

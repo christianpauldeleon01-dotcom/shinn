@@ -227,7 +227,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                         ? _profile.name[0].toUpperCase() 
                         : 'U',
                     style: NeonTypography.displayMedium.copyWith(
-                      color: NeonColors.primary,
+                      color: isDark ? NeonColors.background : LightModeColors.primary,
                     ),
                   ),
                 ),
