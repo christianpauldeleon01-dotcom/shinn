@@ -570,7 +570,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
           label: 'Distance',
           value: '${_distance.toStringAsFixed(2)} km',
           icon: CupertinoIcons.map,
-          iconColor: NeonColors.iconOnSurfaceSecondary,
+          iconColor: NeonColors.iconOnSurface,
         ),
         Container(
           width: 1,
