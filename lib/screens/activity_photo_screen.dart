@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:gal/gal.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../services/gps_service.dart';
 import '../services/activity_service.dart';
 
@@ -445,6 +446,18 @@ class _ActivityPhotoScreenState extends State<ActivityPhotoScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
+      if (source == ImageSource.camera) {
+        final cameraStatus = await Permission.camera.request();
+        if (!cameraStatus.isGranted) {
+          return;
+        }
+      } else {
+        final photosStatus = await Permission.photos.request();
+        if (!photosStatus.isGranted && photosStatus.isDenied) {
+          return;
+        }
+      }
+      
       final XFile? image = await _picker.pickImage(
         source: source,
         maxWidth: 1920,

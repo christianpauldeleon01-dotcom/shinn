@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/activity_model.dart';
 import '../services/activity_service.dart';
@@ -511,28 +512,20 @@ class _ActivityDetailScreenState extends State<ActivityDetailScreen> {
     try {
       final sourceFile = File(_activity!.photoPath!);
       
-      // Get the pictures directory
-      final directory = await getExternalStorageDirectory();
-      if (directory == null) {
-        if (mounted) {
-          _showErrorDialog('Could not access storage');
-        }
-        return;
-      }
-      
-      // Create Trak folder if it doesn't exist
-      final trakDir = Directory('${directory.path}/Trak');
-      if (!await trakDir.exists()) {
-        await trakDir.create(recursive: true);
-      }
-      
-      // Copy file to Trak folder
+      final tempDir = await getTemporaryDirectory();
       final fileName = 'activity_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final newPath = '${trakDir.path}/$fileName';
-      await sourceFile.copy(newPath);
+      final tempPath = '${tempDir.path}/$fileName';
+      await sourceFile.copy(tempPath);
+      
+      await Gal.putImage(tempPath);
+      
+      final tempFile = File(tempPath);
+      if (await tempFile.exists()) {
+        await tempFile.delete();
+      }
       
       if (mounted) {
-        _showSuccessMessage('Photo saved to: $newPath');
+        _showSuccessMessage('Photo saved to gallery');
       }
     } catch (e) {
       if (mounted) {
