@@ -492,46 +492,55 @@ class _ActivityPhotoScreenState extends State<ActivityPhotoScreen> {
   }
 
   Future<void> _saveWithOverlay() async {
-    setState(() {
-      _isCapturing = true;
-    });
+    if (!mounted) return;
+    
+    setState(() => _isCapturing = true);
 
     try {
-      final boundary = _captureKey.currentContext?.findRenderObject()
-          as RenderRepaintBoundary?;
-      if (boundary == null) {
-        setState(() {
-          _isCapturing = false;
-        });
+      await Future.delayed(const Duration(milliseconds: 100));
+      
+      if (!mounted) return;
+      
+      final RenderRepaintBoundary? boundary = _captureKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null || !mounted) {
+        _navigateBack();
         return;
       }
 
-      final image = await boundary.toImage(pixelRatio: 2.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) {
-        setState(() {
-          _isCapturing = false;
-        });
+      final ui.Image image = await boundary.toImage(pixelRatio: 2.0);
+      if (!mounted) return;
+      
+      final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null || !mounted) {
+        _navigateBack();
         return;
       }
 
       final Uint8List pngBytes = byteData.buffer.asUint8List();
+      if (!mounted) return;
 
-      final directory = await getApplicationDocumentsDirectory();
-      final fileName =
-          'activity_photo_${DateTime.now().millisecondsSinceEpoch}.png';
-      final file = File('${directory.path}/$fileName');
+      final Directory directory = await getApplicationDocumentsDirectory();
+      final String fileName = 'activity_photo_${DateTime.now().millisecondsSinceEpoch}.png';
+      final File file = File('${directory.path}/$fileName');
       await file.writeAsBytes(pngBytes);
+      
+      if (!mounted) return;
 
-      await Gal.putImage(file.path);
+      try {
+        await Gal.putImage(file.path);
+      } catch (_) {}
 
-      if (mounted) {
-        Navigator.of(context).pop('saved');
-      }
+      _navigateBack();
     } catch (e) {
-      setState(() {
-        _isCapturing = false;
-      });
+      if (mounted) {
+        _navigateBack();
+      }
+    }
+  }
+
+  void _navigateBack() {
+    if (mounted) {
+      Navigator.of(context).pop('saved');
     }
   }
 
