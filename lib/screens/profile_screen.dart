@@ -71,237 +71,202 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: TextStyle(color: NeonColors.textPrimary),
             ),
           ),
-          SliverToBoxAdapter(child: _buildProfileHeader()),
-          SliverToBoxAdapter(child: _buildStatsSection()),
-          SliverToBoxAdapter(child: _buildAccountSection()),
-          SliverToBoxAdapter(child: _buildSettingsSection()),
-          SliverToBoxAdapter(child: _buildAboutSection()),
+          SliverToBoxAdapter(child: _buildProfileCard()),
+          SliverToBoxAdapter(child: _buildStatsCard()),
+          SliverToBoxAdapter(child: _buildMenuCard()),
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
     );
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileCard() {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: NeonColors.primary.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                _profile.name.isNotEmpty ? _profile.name[0].toUpperCase() : 'U',
-                style: NeonTypography.displayMedium.copyWith(
-                  color: NeonColors.primary,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: NeonColors.surface,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: NeonColors.primary.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  _profile.name.isNotEmpty ? _profile.name[0].toUpperCase() : 'U',
+                  style: NeonTypography.displayMedium.copyWith(
+                    color: NeonColors.primary,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            _profile.name,
-            style: NeonTypography.headlineMedium.copyWith(
-              color: NeonColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _profile.activities,
-            style: NeonTypography.bodyMedium.copyWith(
-              color: NeonColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatsSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 8),
-            child: Text(
-              'STATISTICS',
-              style: NeonTypography.labelSmall.copyWith(
-                color: NeonColors.textTertiary,
-                letterSpacing: 1,
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: NeonColors.surface,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              children: [
-                _buildSettingsRow('Activities', '$_activitiesCount', CupertinoIcons.flame),
-                _buildDivider(),
-                _buildSettingsRow('Total Distance', '${_totalDistanceKm.toStringAsFixed(1)} km', CupertinoIcons.map),
-                _buildDivider(),
-                _buildSettingsRow('Total Time', _totalTime, CupertinoIcons.timer),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAccountSection() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 24, left: 16, right: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 8),
-            child: Text(
-              'ACCOUNT',
-              style: NeonTypography.labelSmall.copyWith(
-                color: NeonColors.textTertiary,
-                letterSpacing: 1,
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: NeonColors.surface,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              children: [
-                _buildArrowRow('Edit Profile', CupertinoIcons.person),
-                _buildDivider(),
-                _buildArrowRow('Notifications', CupertinoIcons.bell),
-                _buildDivider(),
-                _buildArrowRow('Privacy', CupertinoIcons.lock),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingsSection() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 24, left: 16, right: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 8),
-            child: Text(
-              'SETTINGS',
-              style: NeonTypography.labelSmall.copyWith(
-                color: NeonColors.textTertiary,
-                letterSpacing: 1,
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: NeonColors.surface,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              children: [
-                _buildArrowRow('Units', CupertinoIcons.number),
-                _buildDivider(),
-                _buildArrowRow('Goals', CupertinoIcons.flag),
-                _buildDivider(),
-                _buildArrowRow('GPS Settings', CupertinoIcons.location),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAboutSection() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 24, left: 16, right: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 16, bottom: 8),
-            child: Text(
-              'ABOUT',
-              style: NeonTypography.labelSmall.copyWith(
-                color: NeonColors.textTertiary,
-                letterSpacing: 1,
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: NeonColors.surface,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              children: [
-                _buildArrowRow('Help & Support', CupertinoIcons.question_circle),
-                _buildDivider(),
-                _buildArrowRow('About', CupertinoIcons.info),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingsRow(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Icon(icon, color: NeonColors.primary, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: NeonTypography.bodyMedium.copyWith(
+            const SizedBox(height: 16),
+            Text(
+              _profile.name,
+              style: NeonTypography.headlineMedium.copyWith(
                 color: NeonColors.textPrimary,
               ),
             ),
-          ),
-          Text(
-            value,
-            style: NeonTypography.bodyMedium.copyWith(
-              color: NeonColors.textSecondary,
+            const SizedBox(height: 8),
+            Text(
+              _profile.activities,
+              style: NeonTypography.bodyMedium.copyWith(
+                color: NeonColors.textSecondary,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: CupertinoButton(
+                color: NeonColors.primary,
+                borderRadius: BorderRadius.circular(12),
+                child: Text(
+                  'Edit Profile',
+                  style: NeonTypography.bodyMedium.copyWith(
+                    color: NeonColors.background,
+                  ),
+                ),
+                onPressed: () {},
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildArrowRow(String label, IconData icon) {
-    return GestureDetector(
-      onTap: () {},
+  Widget _buildStatsCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: NeonColors.surface,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Statistics',
+              style: NeonTypography.titleMedium.copyWith(
+                color: NeonColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatItem('$_activitiesCount', 'Activities', CupertinoIcons.flame),
+                ),
+                Container(width: 1, height: 50, color: NeonColors.border.withValues(alpha: 0.3)),
+                Expanded(
+                  child: _buildStatItem('${_totalDistanceKm.toStringAsFixed(0)}', 'km Total', CupertinoIcons.map),
+                ),
+                Container(width: 1, height: 50, color: NeonColors.border.withValues(alpha: 0.3)),
+                Expanded(
+                  child: _buildStatItem(_totalTime, 'Total Time', CupertinoIcons.timer),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String value, String label, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: NeonColors.primary, size: 24),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: NeonTypography.headlineSmall.copyWith(
+            color: NeonColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: NeonTypography.labelSmall.copyWith(
+            color: NeonColors.textTertiary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMenuCard() {
+    final menuItems = [
+      {'icon': CupertinoIcons.person, 'title': 'Account Settings'},
+      {'icon': CupertinoIcons.bell, 'title': 'Notifications'},
+      {'icon': CupertinoIcons.lock, 'title': 'Privacy'},
+      {'icon': CupertinoIcons.question_circle, 'title': 'Help & Support'},
+      {'icon': CupertinoIcons.info, 'title': 'About'},
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: NeonColors.surface,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          children: menuItems.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+            return Column(
+              children: [
+                _buildMenuRow(item['icon'] as IconData, item['title'] as String),
+                if (index < menuItems.length - 1)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 56),
+                    child: Container(
+                      height: 0.5,
+                      color: NeonColors.border.withValues(alpha: 0.3),
+                    ),
+                  ),
+              ],
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuRow(IconData icon, String title) {
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      onPressed: () {},
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           children: [
-            Icon(icon, color: NeonColors.primary, size: 20),
-            const SizedBox(width: 12),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: NeonColors.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: NeonColors.primary, size: 18),
+            ),
+            const SizedBox(width: 16),
             Expanded(
               child: Text(
-                label,
+                title,
                 style: NeonTypography.bodyMedium.copyWith(
                   color: NeonColors.textPrimary,
                 ),
@@ -314,16 +279,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 48),
-      child: Container(
-        height: 0.5,
-        color: NeonColors.border.withValues(alpha: 0.3),
       ),
     );
   }
