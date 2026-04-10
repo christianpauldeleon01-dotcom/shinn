@@ -6,9 +6,7 @@ import '../models/user_profile_model.dart';
 import '../database/database_service.dart';
 import '../theme/trak_design_system.dart';
 import 'activity_detail_screen.dart';
-import 'activity_tracking_screen.dart';
 
-/// Progress Screen - Main dashboard with neon styling
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
 
@@ -19,26 +17,17 @@ class ProgressScreen extends StatefulWidget {
 class _ProgressScreenState extends State<ProgressScreen> {
   List<Activity> _activities = [];
   List<DateTime> _weekDates = [];
-  late UserProfile _profile;
 
   @override
   void initState() {
     super.initState();
     _loadActivities();
-    _loadProfile();
     _generateWeekDates();
-    
     themeChangeNotifier.addListener(_onThemeChange);
   }
 
   void _onThemeChange() {
     if (mounted) setState(() {});
-  }
-
-  void _loadProfile() {
-    setState(() {
-      _profile = DatabaseService.getUserProfile();
-    });
   }
 
   void _loadActivities() {
@@ -61,356 +50,133 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
+    return CupertinoPageScaffold(
+      backgroundColor: NeonColors.background,
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          SliverToBoxAdapter(child: _buildHeader()),
-          SliverToBoxAdapter(child: _buildBigStat()),
-          SliverToBoxAdapter(child: _buildStatsRow()),
-          SliverToBoxAdapter(child: _buildWeeklyGoal()),
-          SliverToBoxAdapter(child: _buildWeeklyChart()),
-          SliverToBoxAdapter(child: _buildActivitiesHeader()),
-          _buildActivitiesList(),
-          const SliverToBoxAdapter(child: SizedBox(height: 140)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    final now = DateTime.now();
-    final dateFormat = DateFormat('EEEE, MMMM d');
-    final isDark = currentThemeMode == TrakThemeMode.dark;
-    
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Date
-          Text(
-            dateFormat.format(now).toUpperCase(),
-            style: NeonTypography.labelMedium.copyWith(
-              color: NeonColors.textTertiary,
-              letterSpacing: 2,
+          CupertinoSliverNavigationBar(
+            backgroundColor: NeonColors.background,
+            border: null,
+            largeTitle: Text(
+              'Progress',
+              style: TextStyle(color: NeonColors.textPrimary),
             ),
           ),
-          const SizedBox(height: 8),
-          
-          // Greeting & Avatar
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _getGreeting(),
-                    style: NeonTypography.displaySmall.copyWith(
-                      color: NeonColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _profile.name.toUpperCase(),
-                    style: NeonTypography.titleMedium.copyWith(
-                      color: NeonColors.textSecondary,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                ],
-              ),
-              // Avatar with neon glow
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  gradient: NeonColors.primaryGradient,
-                  shape: BoxShape.circle,
-                  boxShadow: NeonShadows.neon(NeonColors.primary),
-                ),
-                child: Center(
-                  child: Text(
-                    _profile.name.isNotEmpty ? _profile.name[0].toUpperCase() : 'U',
-                    style: NeonTypography.headlineMedium.copyWith(
-                      color: isDark ? NeonColors.background : LightModeColors.primary,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          SliverToBoxAdapter(child: _buildSummarySection()),
+          SliverToBoxAdapter(child: _buildWeeklySection()),
+          SliverToBoxAdapter(child: _buildGoalsSection()),
+          SliverToBoxAdapter(child: _buildActivitiesSection()),
+          const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
     );
   }
 
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-  }
-
-  Widget _buildBigStat() {
+  Widget _buildSummarySection() {
     double totalKm = 0;
+    int totalSeconds = 0;
     for (var activity in _activities) {
       if (activity.distanceMeters.isFinite && !activity.distanceMeters.isNaN) {
         totalKm += activity.distanceMeters / 1000;
       }
+      if (activity.durationSeconds.isFinite && !activity.durationSeconds.isNaN) {
+        totalSeconds += activity.durationSeconds;
+      }
     }
+    final hours = totalSeconds ~/ 3600;
+    final minutes = (totalSeconds % 3600) ~/ 60;
+    final timeString = hours > 0 ? '${hours}h ${minutes}m' : '${minutes}m';
 
-    final textOnGradient = NeonColors.textOnPrimaryGradient;
-    final subtextOnGradient = NeonColors.subtextOnPrimaryGradient;
-
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(28),
-        decoration: BoxDecoration(
-          gradient: NeonColors.primaryGradient,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: NeonShadows.neon(NeonColors.primary),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(CupertinoIcons.flame_fill, color: textOnGradient, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'TOTAL DISTANCE',
-                  style: NeonTypography.labelMedium.copyWith(
-                    color: subtextOnGradient,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  totalKm.toStringAsFixed(1),
-                  style: NeonTypography.displayLarge.copyWith(
-                    color: textOnGradient,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Text(
-                    'KM',
-                    style: NeonTypography.titleLarge.copyWith(
-                      color: subtextOnGradient,
-                      letterSpacing: 3,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              height: 4,
-              decoration: BoxDecoration(
-                color: textOnGradient.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: (totalKm / 100 * 100).clamp(1, 100).toInt(),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: textOnGradient,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: (100 - (totalKm / 100 * 100).clamp(1, 100).toInt()).clamp(0, 99),
-                    child: Container(),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${_activities.length} ACTIVITIES COMPLETED',
-              style: NeonTypography.labelSmall.copyWith(
-                color: subtextOnGradient,
-                letterSpacing: 1.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatsRow() {
     double weeklyKm = 0;
-    int weeklySeconds = 0;
-    
     for (var activity in _activities) {
       if (activity.date.isAfter(_weekDates.first.subtract(const Duration(days: 1)))) {
         if (activity.distanceMeters.isFinite && !activity.distanceMeters.isNaN) {
           weeklyKm += activity.distanceMeters / 1000;
         }
-        if (activity.durationSeconds.isFinite && !activity.durationSeconds.isNaN) {
-          weeklySeconds += activity.durationSeconds;
-        }
       }
     }
-    
-    final hours = weeklySeconds ~/ 3600;
-    final minutes = (weeklySeconds % 3600) ~/ 60;
-    final timeString = hours > 0 ? '${hours}h ${minutes}m' : '${minutes}m';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
+      padding: const EdgeInsets.all(16),
+      child: Column(
         children: [
-          _buildStatCard(weeklyKm.toStringAsFixed(1), 'KM THIS WEEK', CupertinoIcons.arrow_left_right, NeonColors.iconOnSurface),
-          const SizedBox(width: 12),
-          _buildStatCard(timeString, 'ACTIVE TIME', CupertinoIcons.timer, NeonColors.iconOnSurfaceSecondary),
-          const SizedBox(width: 12),
-          _buildStatCard(_calculateStreak(), 'DAY STREAK', CupertinoIcons.bolt_fill, NeonColors.iconOnSurface),
+          _buildSettingsRow('Total Distance', '${totalKm.toStringAsFixed(1)} km', CupertinoIcons.map),
+          _buildSettingsRow('Total Time', timeString, CupertinoIcons.timer),
+          _buildSettingsRow('Activities', '${_activities.length}', CupertinoIcons.flame),
+          _buildSettingsRow('This Week', '${weeklyKm.toStringAsFixed(1)} km', CupertinoIcons.calendar),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard(String value, String label, IconData icon, Color iconColor) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: NeonColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: NeonColors.border.withValues(alpha: 0.5)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: iconColor, size: 22),
-            const SizedBox(height: 10),
-            Text(
-              value,
-              style: NeonTypography.headlineMedium.copyWith(
-                color: NeonColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
+  Widget _buildWeeklySection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 8),
+            child: Text(
+              'THIS WEEK',
               style: NeonTypography.labelSmall.copyWith(
                 color: NeonColors.textTertiary,
-                letterSpacing: 0.5,
+                letterSpacing: 1,
               ),
-              textAlign: TextAlign.center,
             ),
-          ],
-        ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: NeonColors.surface,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              children: List.generate(7, (i) {
+                final date = _weekDates[i];
+                double dayKm = 0;
+                for (var activity in _activities) {
+                  if (DateUtils.isSameDay(activity.date, date)) {
+                    dayKm += activity.distanceKm;
+                  }
+                }
+                final dayName = DateFormat('EEE').format(date).toUpperCase();
+                return _buildChartRow(dayName, dayKm, i == 6);
+              }),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  String _calculateStreak() {
-    int streak = 0;
-    final now = DateTime.now();
-    for (int i = 0; i < 7; i++) {
-      final date = now.subtract(Duration(days: i));
-      final hasActivity = _activities.any((a) => DateUtils.isSameDay(a.date, date));
-      if (hasActivity) {
-        streak++;
-      } else if (i > 0) break;
-    }
-    return streak.toString();
-  }
-
-  Widget _buildWeeklyGoal() {
-    double weeklyKm = 0;
-    for (var activity in _activities) {
-      if (activity.date.isAfter(_weekDates.first.subtract(const Duration(days: 1)))) {
-        if (activity.distanceMeters.isFinite && !activity.distanceMeters.isNaN) {
-          weeklyKm += activity.distanceMeters / 1000;
-        }
-      }
-    }
-    
-    final progress = (weeklyKm / 25).clamp(0.0, 1.0);
-    const goalKm = 25.0;
-
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: NeonColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: NeonColors.border.withValues(alpha: 0.5)),
+  Widget _buildChartRow(String day, double km, bool isLast) {
+    final progress = (km / 10).clamp(0.0, 1.0);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        border: isLast ? null : Border(
+          bottom: BorderSide(color: NeonColors.border.withValues(alpha: 0.3)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Weekly Goal',
-                  style: NeonTypography.titleMedium.copyWith(
-                    color: NeonColors.textPrimary,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: NeonColors.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${(progress * 100).toInt()}%',
-                    style: NeonTypography.labelMedium.copyWith(
-                      color: NeonColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 40,
+            child: Text(
+              day,
+              style: NeonTypography.bodyMedium.copyWith(
+                color: NeonColors.textSecondary,
+              ),
             ),
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  weeklyKm.toStringAsFixed(1),
-                  style: NeonTypography.displayMedium.copyWith(
-                    color: NeonColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    '/ ${goalKm.toInt()} km',
-                    style: NeonTypography.titleMedium.copyWith(
-                      color: NeonColors.textTertiary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              height: 6,
+          ),
+          Expanded(
+            child: Container(
+              height: 8,
+              margin: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: NeonColors.surface,
-                borderRadius: BorderRadius.circular(3),
+                color: NeonColors.background,
+                borderRadius: BorderRadius.circular(4),
               ),
               child: FractionallySizedBox(
                 alignment: Alignment.centerLeft,
@@ -418,72 +184,173 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: NeonColors.primary,
-                    borderRadius: BorderRadius.circular(3),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWeeklyChart() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: NeonColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: NeonColors.border.withValues(alpha: 0.5)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'This Week',
-              style: NeonTypography.titleMedium.copyWith(
-                color: NeonColors.textPrimary,
+          ),
+          SizedBox(
+            width: 50,
+            child: Text(
+              km > 0 ? '${km.toStringAsFixed(1)} km' : '--',
+              style: NeonTypography.bodySmall.copyWith(
+                color: NeonColors.textTertiary,
               ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 80,
-              child: CustomPaint(
-                size: const Size(double.infinity, 80),
-                painter: _WeeklyChartPainter(_weekDates, _activities),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActivitiesHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'RECENT ACTIVITIES',
-            style: NeonTypography.titleLarge.copyWith(
-              color: NeonColors.textPrimary,
-              letterSpacing: 2,
+              textAlign: TextAlign.right,
             ),
           ),
-          if (_activities.isNotEmpty)
-            GestureDetector(
-              onTap: () {},
-              child: Text(
-                'SEE ALL',
-                style: NeonTypography.labelMedium.copyWith(
-                  color: NeonColors.primary,
-                  letterSpacing: 1,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoalsSection() {
+    double weeklyKm = 0;
+    for (var activity in _activities) {
+      if (activity.date.isAfter(_weekDates.first.subtract(const Duration(days: 1)))) {
+        if (activity.distanceMeters.isFinite && !activity.distanceMeters.isNaN) {
+          weeklyKm += activity.distanceMeters / 1000;
+        }
+      }
+    }
+    final progress = (weeklyKm / 25).clamp(0.0, 1.0);
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 8),
+            child: Text(
+              'GOALS',
+              style: NeonTypography.labelSmall.copyWith(
+                color: NeonColors.textTertiary,
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: NeonColors.surface,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Weekly Distance Goal',
+                        style: NeonTypography.bodyMedium.copyWith(
+                          color: NeonColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        '${(progress * 100).toInt()}%',
+                        style: NeonTypography.bodyMedium.copyWith(
+                          color: NeonColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: NeonColors.background,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: progress,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: NeonColors.primary,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${weeklyKm.toStringAsFixed(1)} / 25 km',
+                    style: NeonTypography.bodySmall.copyWith(
+                      color: NeonColors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivitiesSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'RECENT ACTIVITIES',
+                  style: NeonTypography.labelSmall.copyWith(
+                    color: NeonColors.textTertiary,
+                    letterSpacing: 1,
+                  ),
                 ),
+                if (_activities.isNotEmpty)
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    minSize: 0,
+                    child: Text(
+                      'See All',
+                      style: NeonTypography.bodySmall.copyWith(
+                        color: NeonColors.primary,
+                      ),
+                    ),
+                    onPressed: () {},
+                  ),
+              ],
+            ),
+          ),
+          if (_activities.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: NeonColors.surface,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: Text(
+                  'No activities yet',
+                  style: NeonTypography.bodyMedium.copyWith(
+                    color: NeonColors.textTertiary,
+                  ),
+                ),
+              ),
+            )
+          else
+            Container(
+              decoration: BoxDecoration(
+                color: NeonColors.surface,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                children: _activities.take(5).map((activity) {
+                  final index = _activities.indexOf(activity);
+                  return _buildActivityRow(activity, index >= 4);
+                }).toList(),
               ),
             ),
         ],
@@ -491,91 +358,70 @@ class _ProgressScreenState extends State<ProgressScreen> {
     );
   }
 
-  Widget _buildActivitiesList() {
-    if (_activities.isEmpty) {
-      return SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: NeonEmptyState(
-            icon: CupertinoIcons.sportscourt,
-            title: 'No activities yet',
-            subtitle: 'Start your first run to see it here',
-            actionLabel: 'START RUN',
-            onAction: _startNewActivity,
+  Widget _buildActivityRow(Activity activity, bool isLast) {
+    return GestureDetector(
+      onTap: () => _openActivityDetail(activity),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: isLast ? null : Border(
+            bottom: BorderSide(color: NeonColors.border.withValues(alpha: 0.3)),
           ),
         ),
-      );
-    }
-
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          if (index >= _activities.length) return null;
-          final activity = _activities[index];
-          return _buildActivityItem(activity, index);
-        },
-        childCount: _activities.length.clamp(0, 5),
-      ),
-    );
-  }
-
-  Widget _buildActivityItem(Activity activity, int index) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      child: GestureDetector(
-        onTap: () => _openActivityDetail(activity),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: NeonColors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: NeonColors.border.withValues(alpha: 0.5)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: NeonColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: NeonColors.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Text(
+                  _getActivityEmoji(activity.activityTypeString),
+                  style: const TextStyle(fontSize: 18),
                 ),
-                child: Center(
-                  child: Text(
-                    _getActivityEmoji(activity.activityTypeString),
-                    style: const TextStyle(fontSize: 22),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    activity.activityTypeString,
+                    style: NeonTypography.bodyMedium.copyWith(
+                      color: NeonColors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    DateFormat('MMM d, yyyy').format(activity.date),
+                    style: NeonTypography.bodySmall.copyWith(
+                      color: NeonColors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${activity.distanceKm.toStringAsFixed(1)} km',
+                  style: NeonTypography.bodyMedium.copyWith(
+                    color: NeonColors.textPrimary,
                   ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      activity.activityTypeString,
-                      style: NeonTypography.titleMedium.copyWith(
-                        color: NeonColors.textPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${activity.distanceKm.toStringAsFixed(2)} km • ${activity.formattedDuration}',
-                      style: NeonTypography.bodySmall.copyWith(
-                        color: NeonColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                Text(
+                  activity.formattedDuration,
+                  style: NeonTypography.bodySmall.copyWith(
+                    color: NeonColors.textTertiary,
+                  ),
                 ),
-              ),
-              Icon(
-                CupertinoIcons.chevron_right,
-                color: NeonColors.textTertiary,
-                size: 18,
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -592,11 +438,34 @@ class _ProgressScreenState extends State<ProgressScreen> {
     }
   }
 
-  void _startNewActivity() {
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (context) => const ActivityTrackingScreen(),
-        fullscreenDialog: true,
+  Widget _buildSettingsRow(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: NeonColors.surface,
+        border: Border(
+          bottom: BorderSide(color: NeonColors.border.withValues(alpha: 0.3)),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: NeonColors.primary, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: NeonTypography.bodyMedium.copyWith(
+                color: NeonColors.textPrimary,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: NeonTypography.bodyMedium.copyWith(
+              color: NeonColors.textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -608,108 +477,4 @@ class _ProgressScreenState extends State<ProgressScreen> {
       ),
     );
   }
-}
-
-/// Custom painter for weekly chart
-class _WeeklyChartPainter extends CustomPainter {
-  final List<DateTime> weekDates;
-  final List<Activity> activities;
-  
-  _WeeklyChartPainter(this.weekDates, this.activities);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = NeonColors.primary.withValues(alpha: 0.2)
-      ..style = PaintingStyle.fill;
-    
-    final fillPaint = Paint()
-      ..shader = LinearGradient(
-        colors: [
-          NeonColors.primary.withValues(alpha: 0.4),
-          NeonColors.primary.withValues(alpha: 0.1),
-        ],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    
-    final linePaint = Paint()
-      ..color = NeonColors.primary
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    
-    final dotPaint = Paint()
-      ..color = NeonColors.primary
-      ..style = PaintingStyle.fill;
-    
-    final maxValue = 10.0;
-    final barWidth = size.width / 7;
-    final maxHeight = size.height - 20;
-    
-    // Get daily distances
-    final dailyDistances = List.generate(7, (i) {
-      final date = weekDates[i];
-      double distance = 0;
-      for (var activity in activities) {
-        if (DateUtils.isSameDay(activity.date, date)) {
-          distance += activity.distanceKm;
-        }
-      }
-      return distance;
-    });
-    
-    // Draw bars
-    for (int i = 0; i < 7; i++) {
-      final barHeight = (dailyDistances[i] / maxValue * maxHeight).clamp(4.0, maxHeight);
-      final x = i * barWidth + barWidth * 0.2;
-      final width = barWidth * 0.6;
-      
-      // Bar background
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(x, maxHeight - 4, width, 4),
-          const Radius.circular(2),
-        ),
-        paint,
-      );
-      
-      // Active bar
-      if (barHeight > 4) {
-        final gradient = LinearGradient(
-          colors: [NeonColors.primary, NeonColors.secondary],
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-        );
-        
-        final barPaint = Paint()
-          ..shader = gradient.createShader(
-            Rect.fromLTWH(x, maxHeight - barHeight, width, barHeight),
-          );
-        
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTWH(x, maxHeight - barHeight, width, barHeight),
-            const Radius.circular(6),
-          ),
-          barPaint,
-        );
-        
-        // Glow effect
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTWH(x, maxHeight - barHeight, width, barHeight),
-            const Radius.circular(6),
-          ),
-          Paint()
-            ..color = NeonColors.primary.withValues(alpha: 0.3)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
-        );
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
