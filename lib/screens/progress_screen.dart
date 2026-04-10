@@ -16,15 +16,10 @@ class ProgressScreen extends StatefulWidget {
   State<ProgressScreen> createState() => _ProgressScreenState();
 }
 
-class _ProgressScreenState extends State<ProgressScreen> 
-    with SingleTickerProviderStateMixin {
+class _ProgressScreenState extends State<ProgressScreen> {
   List<Activity> _activities = [];
   List<DateTime> _weekDates = [];
   late UserProfile _profile;
-  
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
@@ -32,26 +27,6 @@ class _ProgressScreenState extends State<ProgressScreen>
     _loadActivities();
     _loadProfile();
     _generateWeekDates();
-    
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
-    );
-    
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0.0, 0.15),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
-    );
-    
-    Future.delayed(const Duration(milliseconds: 50), () {
-      if (mounted) _animationController.forward();
-    });
     
     themeChangeNotifier.addListener(_onThemeChange);
   }
@@ -80,48 +55,26 @@ class _ProgressScreenState extends State<ProgressScreen>
 
   @override
   void dispose() {
-    _animationController.dispose();
     themeChangeNotifier.removeListener(_onThemeChange);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: SafeArea(
-          bottom: false,
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // Header
-              SliverToBoxAdapter(child: _buildHeader()),
-              
-              // Big Stat Display
-              SliverToBoxAdapter(child: _buildBigStat()),
-              
-              // Stats Row
-              SliverToBoxAdapter(child: _buildStatsRow()),
-              
-              // Weekly Goal
-              SliverToBoxAdapter(child: _buildWeeklyGoal()),
-              
-              // Weekly Chart
-              SliverToBoxAdapter(child: _buildWeeklyChart()),
-              
-              // Activities Header
-              SliverToBoxAdapter(child: _buildActivitiesHeader()),
-              
-              // Activities List
-              _buildActivitiesList(),
-              
-              // Bottom padding
-              const SliverToBoxAdapter(child: SizedBox(height: 140)),
-            ],
-          ),
-        ),
+    return SafeArea(
+      bottom: false,
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(child: _buildHeader()),
+          SliverToBoxAdapter(child: _buildBigStat()),
+          SliverToBoxAdapter(child: _buildStatsRow()),
+          SliverToBoxAdapter(child: _buildWeeklyGoal()),
+          SliverToBoxAdapter(child: _buildWeeklyChart()),
+          SliverToBoxAdapter(child: _buildActivitiesHeader()),
+          _buildActivitiesList(),
+          const SliverToBoxAdapter(child: SizedBox(height: 140)),
+        ],
       ),
     );
   }
@@ -335,10 +288,13 @@ class _ProgressScreenState extends State<ProgressScreen>
 
   Widget _buildStatCard(String value, String label, IconData icon, Color iconColor) {
     return Expanded(
-      child: NeonCard(
+      child: Container(
         padding: const EdgeInsets.all(16),
-        isGlow: true,
-        glowColor: iconColor,
+        decoration: BoxDecoration(
+          color: NeonColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: NeonColors.border.withValues(alpha: 0.5)),
+        ),
         child: Column(
           children: [
             Icon(icon, color: iconColor, size: 22),
@@ -378,7 +334,6 @@ class _ProgressScreenState extends State<ProgressScreen>
   }
 
   Widget _buildWeeklyGoal() {
-    final isDark = currentThemeMode == TrakThemeMode.dark;
     double weeklyKm = 0;
     for (var activity in _activities) {
       if (activity.date.isAfter(_weekDates.first.subtract(const Duration(days: 1)))) {
@@ -393,124 +348,82 @@ class _ProgressScreenState extends State<ProgressScreen>
 
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: GestureDetector(
-        onTap: _startNewActivity,
-        child: NeonCard(
-          padding: const EdgeInsets.all(24),
-          showBorder: true,
-          isGlow: progress >= 1.0,
-          glowColor: NeonColors.success,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'WEEKLY GOAL',
-                    style: NeonTypography.titleLarge.copyWith(
-                      color: NeonColors.textPrimary,
-                      letterSpacing: 2,
-                    ),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: NeonColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: NeonColors.border.withValues(alpha: 0.5)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Weekly Goal',
+                  style: NeonTypography.titleMedium.copyWith(
+                    color: NeonColors.textPrimary,
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      gradient: progress >= 1.0 
-                          ? NeonColors.primaryGradient 
-                          : null,
-                      color: progress >= 1.0 ? null : NeonColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: progress >= 1.0 ? NeonColors.primary : NeonColors.border,
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      '${(progress * 100).toInt()}%',
-                      style: NeonTypography.labelMedium.copyWith(
-                        color: progress >= 1.0 
-                            ? NeonColors.textOnPrimaryGradient 
-                            : NeonColors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    weeklyKm.toStringAsFixed(1),
-                    style: NeonTypography.displayMedium.copyWith(
-                      color: NeonColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      '/ ${goalKm.toInt()} KM',
-                      style: NeonTypography.titleMedium.copyWith(
-                        color: NeonColors.textTertiary,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                height: 8,
-                decoration: BoxDecoration(
-                  color: NeonColors.surface,
-                  borderRadius: BorderRadius.circular(4),
                 ),
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: progress,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: progress >= 1.0 
-                          ? NeonColors.primaryGradient 
-                          : null,
-                      color: progress >= 1.0 ? null : NeonColors.primary,
-                      borderRadius: BorderRadius.circular(4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: NeonColors.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${(progress * 100).toInt()}%',
+                    style: NeonTypography.labelMedium.copyWith(
+                      color: NeonColors.primary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '${(goalKm - weeklyKm).toStringAsFixed(1)} KM TO GO',
-                    style: NeonTypography.labelSmall.copyWith(
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  weeklyKm.toStringAsFixed(1),
+                  style: NeonTypography.displayMedium.copyWith(
+                    color: NeonColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    '/ ${goalKm.toInt()} km',
+                    style: NeonTypography.titleMedium.copyWith(
                       color: NeonColors.textTertiary,
-                      letterSpacing: 1.5,
                     ),
                   ),
-                  Row(
-                    children: [
-                      Icon(CupertinoIcons.play_fill, color: NeonColors.primary, size: 14),
-                      const SizedBox(width: 4),
-                      Text(
-                        'START RUN',
-                        style: NeonTypography.labelMedium.copyWith(
-                          color: NeonColors.primary,
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              height: 6,
+              decoration: BoxDecoration(
+                color: NeonColors.surface,
+                borderRadius: BorderRadius.circular(3),
               ),
-            ],
-          ),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: progress,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: NeonColors.primary,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -519,23 +432,27 @@ class _ProgressScreenState extends State<ProgressScreen>
   Widget _buildWeeklyChart() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: NeonCard(
+      child: Container(
         padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: NeonColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: NeonColors.border.withValues(alpha: 0.5)),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'THIS WEEK',
-              style: NeonTypography.titleLarge.copyWith(
+              'This Week',
+              style: NeonTypography.titleMedium.copyWith(
                 color: NeonColors.textPrimary,
-                letterSpacing: 2,
               ),
             ),
             const SizedBox(height: 16),
             SizedBox(
-              height: 100,
+              height: 80,
               child: CustomPaint(
-                size: const Size(double.infinity, 100),
+                size: const Size(double.infinity, 80),
                 painter: _WeeklyChartPainter(_weekDates, _activities),
               ),
             ),
@@ -607,16 +524,20 @@ class _ProgressScreenState extends State<ProgressScreen>
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       child: GestureDetector(
         onTap: () => _openActivityDetail(activity),
-        child: NeonCard(
+        child: Container(
           padding: const EdgeInsets.all(16),
-          showBorder: false,
+          decoration: BoxDecoration(
+            color: NeonColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: NeonColors.border.withValues(alpha: 0.5)),
+          ),
           child: Row(
             children: [
               Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  gradient: _getActivityGradient(activity.activityTypeString),
+                  color: NeonColors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
@@ -658,27 +579,6 @@ class _ProgressScreenState extends State<ProgressScreen>
         ),
       ),
     );
-  }
-
-  LinearGradient _getActivityGradient(String type) {
-    switch (type.toLowerCase()) {
-      case 'running':
-        return NeonColors.primaryGradient;
-      case 'cycling':
-        return LinearGradient(
-          colors: [NeonColors.secondary, NeonColors.secondaryDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        );
-      case 'swimming':
-        return LinearGradient(
-          colors: [NeonColors.accent, NeonColors.accentDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        );
-      default:
-        return NeonColors.primaryGradient;
-    }
   }
 
   String _getActivityEmoji(String type) {

@@ -170,8 +170,9 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
             _currentPosition = LatLng(position.latitude, position.longitude);
             _gpsAccuracy = position.accuracy;
             _routePoints = GPSService.coordinatesToLatLng(
-              _trackingService.usedCoordinates,
-            );
+            _trackingService.filteredCoordinates,
+            movingOnly: false,
+          );
             _distance = _trackingService.currentDistanceKm;
             _averagePace = _trackingService.formattedCurrentPace;
             _instantPace = _trackingService.formattedInstantPace;
