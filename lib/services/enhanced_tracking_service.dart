@@ -209,10 +209,14 @@ class EnhancedTrackingService {
     final filtered = _locationFilter.processCoordinate(raw);
     if (filtered != null) {
       _filteredCoordinates.add(filtered);
-      _usedCoordinates.add(filtered);
+      
+      // Only count distance when actually moving (speed above threshold)
+      final speed = filtered.speed ?? 0.0;
+      if (speed >= GPSService.movingSpeedThreshold && _filteredCoordinates.length >= 2) {
+        _usedCoordinates.add(filtered);
+      }
       
       // Update speed buffer
-      final speed = filtered.speed ?? 0.0;
       _speedBuffer.add(SpeedData(
         speed: speed,
         timestamp: filtered.timestamp,
@@ -454,7 +458,6 @@ class EnhancedTrackingService {
   double calculateInstantPace() {
     if (_speedBuffer.length < 2) return 0;
     
-    // Calculate total distance and time in the buffer
     double totalDistance = 0;
     int totalTime = 0;
     
@@ -464,8 +467,12 @@ class EnhancedTrackingService {
       ).inSeconds;
       
       if (timeDiff > 0) {
-        totalDistance += _speedBuffer[i].distance - _speedBuffer[i-1].distance;
-        totalTime += timeDiff;
+        final speed = _speedBuffer[i].speed;
+        // Only count distance when moving above threshold
+        if (speed >= GPSService.movingSpeedThreshold) {
+          totalDistance += _speedBuffer[i].distance - _speedBuffer[i-1].distance;
+          totalTime += timeDiff;
+        }
       }
     }
     
@@ -480,7 +487,8 @@ class EnhancedTrackingService {
     final distance = currentFilteredDistance;
     if (distance <= 0) return 0;
     
-    final time = _elapsedSeconds;
+    // Use moving time if available, otherwise total time
+    final time = _movingTimeSeconds > 0 ? _movingTimeSeconds : _elapsedSeconds;
     if (time <= 0) return 0;
     
     return distance / time;
@@ -575,9 +583,13 @@ class EnhancedTrackingService {
     _durationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       _elapsedSeconds++;
       
-      // Update moving time if not auto-paused
-      if (!_isAutoPaused) {
-        _movingTimeSeconds++;
+      // Only count moving time when actually moving (speed above threshold)
+      if (_usedCoordinates.isNotEmpty) {
+        final lastCoord = _usedCoordinates.last;
+        final speed = lastCoord.speed ?? 0.0;
+        if (speed >= GPSService.movingSpeedThreshold) {
+          _movingTimeSeconds++;
+        }
       }
       
       _durationController.add(_elapsedSeconds);
