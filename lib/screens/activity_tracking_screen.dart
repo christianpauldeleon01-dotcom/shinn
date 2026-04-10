@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Colors;
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -407,23 +408,19 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
               urlTemplate: _getTileUrl(_currentMapStyle),
               userAgentPackageName: 'com.trak.app',
               maxZoom: 19,
-              tileBuilder: (context, widget, tile) {
-                return ColorFiltered(
-                  colorFilter: ColorFilter.mode(
-                    NeonColors.primary.withValues(alpha: 0.05),
-                    BlendMode.overlay,
-                  ),
-                  child: widget,
-                );
-              },
             ),
             if (_routePoints.isNotEmpty)
               PolylineLayer(
                 polylines: [
                   Polyline(
                     points: _routePoints,
-                    strokeWidth: 5,
+                    strokeWidth: 6,
                     color: NeonColors.primary,
+                  ),
+                  Polyline(
+                    points: _routePoints,
+                    strokeWidth: 12,
+                    color: NeonColors.primary.withValues(alpha: 0.3),
                   ),
                 ],
               ),
@@ -432,19 +429,25 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
                 if (_currentPosition != null)
                   Marker(
                     point: _currentPosition!,
-                    width: 30,
-                    height: 30,
+                    width: 40,
+                    height: 40,
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: NeonColors.primaryGradient,
+                        color: NeonColors.primary,
                         shape: BoxShape.circle,
-                        boxShadow: NeonShadows.neon(NeonColors.primary),
+                        boxShadow: [
+                          BoxShadow(
+                            color: NeonColors.primary.withValues(alpha: 0.5),
+                            blurRadius: 12,
+                            spreadRadius: 2,
+                          ),
+                        ],
                       ),
                       child: Center(
                         child: Icon(
                           CupertinoIcons.location_fill,
                           color: textOnGradient,
-                          size: 16,
+                          size: 18,
                         ),
                       ),
                     ),
@@ -454,36 +457,107 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
           ],
         ),
         
-        // Map style toggle
+        // Map controls
         Positioned(
           top: 16,
           right: 16,
-          child: _buildMapStyleToggle(),
+          child: Column(
+            children: [
+              _buildMapControlButton(
+                icon: CupertinoIcons.plus,
+                onTap: () {
+                  final zoom = _mapController.camera.zoom + 1;
+                  _mapController.move(_mapController.camera.center, zoom.clamp(3.0, 19.0));
+                },
+              ),
+              const SizedBox(height: 8),
+              _buildMapControlButton(
+                icon: CupertinoIcons.minus,
+                onTap: () {
+                  final zoom = _mapController.camera.zoom - 1;
+                  _mapController.move(_mapController.camera.center, zoom.clamp(3.0, 19.0));
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildMapStyleSelector(),
+            ],
+          ),
+        ),
+        
+        // Center on location button
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: _buildMapControlButton(
+            icon: CupertinoIcons.location,
+            onTap: () {
+              if (_currentPosition != null) {
+                _mapController.move(_currentPosition!, 16);
+              }
+            },
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildMapStyleToggle() {
+  Widget _buildMapControlButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: NeonColors.surface,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: NeonColors.background.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(
+          icon,
+          color: NeonColors.textPrimary,
+          size: 20,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMapStyleSelector() {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: NeonColors.surface.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: NeonColors.border, width: 1),
+        color: NeonColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: NeonColors.background.withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildMapStyleButton(MapStyle.satellite, '🛰️'),
-          _buildMapStyleButton(MapStyle.street, '🗺️'),
-          _buildMapStyleButton(MapStyle.terrain, '🏔️'),
+          _buildMapStyleOption(MapStyle.satellite, CupertinoIcons.globe),
+          const SizedBox(height: 4),
+          _buildMapStyleOption(MapStyle.street, CupertinoIcons.map),
+          const SizedBox(height: 4),
+          _buildMapStyleOption(MapStyle.terrain, CupertinoIcons.layers),
         ],
       ),
     );
   }
 
-  Widget _buildMapStyleButton(MapStyle style, String emoji) {
+  Widget _buildMapStyleOption(MapStyle style, IconData icon) {
     final isSelected = _currentMapStyle == style;
     return GestureDetector(
       onTap: () {
@@ -492,12 +566,17 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.all(8),
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
-          color: isSelected ? NeonColors.primary.withValues(alpha: 0.2) : null,
+          color: isSelected ? NeonColors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Text(emoji, style: const TextStyle(fontSize: 18)),
+        child: Icon(
+          icon,
+          color: isSelected ? NeonColors.background : NeonColors.textSecondary,
+          size: 18,
+        ),
       ),
     );
   }
