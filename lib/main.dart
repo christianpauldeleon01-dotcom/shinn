@@ -193,7 +193,7 @@ class _MainTabBarScaffoldState extends ConsumerState<MainTabBarScaffold>
                   // Progress tab
                   Expanded(
                     child: _buildNavItem(
-                      icon: CupertinoIcons.chart_bar_square_fill,
+                      icon: CupertinoIcons.graph_circle_fill,
                       label: 'Progress',
                       index: 0,
                       isSelected: selectedIndex == 0,
@@ -205,7 +205,7 @@ class _MainTabBarScaffoldState extends ConsumerState<MainTabBarScaffold>
                   // Profile tab
                   Expanded(
                     child: _buildNavItem(
-                      icon: CupertinoIcons.person_crop_square_fill,
+                      icon: CupertinoIcons.person_circle_fill,
                       label: 'Profile',
                       index: 1,
                       isSelected: selectedIndex == 1,
