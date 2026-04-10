@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors;
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -356,9 +355,6 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
           ),
           child: Column(
             children: [
-              // Auto-pause indicator
-              if (_isAutoPaused) _buildAutoPauseIndicator(),
-              
               // Stats Row
               _buildStatsRow(),
               const SizedBox(height: 16),
@@ -381,20 +377,13 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
     
     if (_currentPosition == null) {
       return Container(
-        color: NeonColors.background,
+        color: NeonColors.surface,
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CupertinoActivityIndicator(color: NeonColors.primary),
-              const SizedBox(height: 16),
-              Text(
-                'Loading map...',
-                style: NeonTypography.bodyMedium.copyWith(
-                  color: NeonColors.textSecondary,
-                ),
-              ),
-            ],
+          child: Text(
+            'Loading map...',
+            style: NeonTypography.bodyMedium.copyWith(
+              color: NeonColors.textSecondary,
+            ),
           ),
         ),
       );
@@ -412,17 +401,15 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
           ),
           children: [
             TileLayer(
-              urlTemplate: _getTileUrl(MapStyle.street),
+              urlTemplate: _getTileUrl(_currentMapStyle),
               userAgentPackageName: 'com.trak.app',
               maxZoom: 19,
               tileBuilder: (context, widget, tile) {
                 return ColorFiltered(
-                  colorFilter: const ColorFilter.matrix(<double>[
-                    0.2126, 0.7152, 0.0722, 0, 0,
-                    0.2126, 0.7152, 0.0722, 0, 0,
-                    0.2126, 0.7152, 0.0722, 0, 0,
-                    0, 0, 0, 1, 0,
-                  ]),
+                  colorFilter: ColorFilter.mode(
+                    NeonColors.primary.withValues(alpha: 0.05),
+                    BlendMode.overlay,
+                  ),
                   child: widget,
                 );
               },
@@ -432,12 +419,7 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
                 polylines: [
                   Polyline(
                     points: _routePoints,
-                    strokeWidth: 8,
-                    color: NeonColors.secondary,
-                  ),
-                  Polyline(
-                    points: _routePoints,
-                    strokeWidth: 4,
+                    strokeWidth: 5,
                     color: NeonColors.primary,
                   ),
                 ],
@@ -447,40 +429,21 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
                 if (_currentPosition != null)
                   Marker(
                     point: _currentPosition!,
-                    width: 50,
-                    height: 50,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: NeonColors.primary.withValues(alpha: 0.6),
-                                blurRadius: 20,
-                                spreadRadius: 5,
-                              ),
-                            ],
-                          ),
+                    width: 30,
+                    height: 30,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: NeonColors.primaryGradient,
+                        shape: BoxShape.circle,
+                        boxShadow: NeonShadows.neon(NeonColors.primary),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          CupertinoIcons.location_fill,
+                          color: textOnGradient,
+                          size: 16,
                         ),
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            color: NeonColors.primary,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: NeonColors.background, width: 2),
-                          ),
-                          child: Icon(
-                            CupertinoIcons.location_fill,
-                            color: textOnGradient,
-                            size: 12,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
               ],
@@ -488,156 +451,36 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
           ],
         ),
         
-        // Neon glow overlay at bottom
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 120,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  NeonColors.background.withValues(alpha: 0),
-                  NeonColors.background.withValues(alpha: 0.8),
-                ],
-              ),
-            ),
-          ),
-        ),
-        
-        // Top right controls - neon styled
+        // Map style toggle
         Positioned(
           top: 16,
           right: 16,
-          child: Container(
-            decoration: BoxDecoration(
-              color: NeonColors.background.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: NeonColors.primary.withValues(alpha: 0.3)),
-              boxShadow: [
-                BoxShadow(
-                  color: NeonColors.primary.withValues(alpha: 0.2),
-                  blurRadius: 12,
-                  spreadRadius: 0,
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                _buildNeonButton(
-                  icon: CupertinoIcons.plus,
-                  onTap: () {
-                    final zoom = _mapController.camera.zoom + 1;
-                    _mapController.move(_mapController.camera.center, zoom.clamp(3.0, 19.0));
-                  },
-                ),
-                Container(height: 1, width: 32, color: NeonColors.primary.withValues(alpha: 0.2)),
-                _buildNeonButton(
-                  icon: CupertinoIcons.minus,
-                  onTap: () {
-                    final zoom = _mapController.camera.zoom - 1;
-                    _mapController.move(_mapController.camera.center, zoom.clamp(3.0, 19.0));
-                  },
-                ),
-                Container(height: 1, width: 32, color: NeonColors.primary.withValues(alpha: 0.2)),
-                _buildNeonButton(
-                  icon: CupertinoIcons.location,
-                  onTap: () {
-                    if (_currentPosition != null) {
-                      _mapController.move(_currentPosition!, 16);
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
+          child: _buildMapStyleToggle(),
         ),
-        
-        // Map style selector - bottom left
-        Positioned(
-          bottom: 140,
-          left: 16,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: NeonColors.background.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: NeonColors.border),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildStyleChip(MapStyle.satellite, 'Sat'),
-                const SizedBox(width: 8),
-                _buildStyleChip(MapStyle.street, 'Map'),
-                const SizedBox(width: 8),
-                _buildStyleChip(MapStyle.terrain, 'Ter'),
-              ],
-            ),
-          ),
-        ),
-        
-        // Route info badge - bottom right
-        if (_routePoints.isNotEmpty)
-          Positioned(
-            bottom: 140,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: NeonColors.primary,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: NeonColors.primary.withValues(alpha: 0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(CupertinoIcons.map, color: textOnGradient, size: 16),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${_distance.toStringAsFixed(2)} km',
-                    style: NeonTypography.labelMedium.copyWith(
-                      color: textOnGradient,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
       ],
     );
   }
 
-  Widget _buildNeonButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        alignment: Alignment.center,
-        child: Icon(
-          icon,
-          color: NeonColors.primary,
-          size: 20,
-        ),
+  Widget _buildMapStyleToggle() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: NeonColors.surface.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: NeonColors.border, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildMapStyleButton(MapStyle.satellite, '🛰️'),
+          _buildMapStyleButton(MapStyle.street, '🗺️'),
+          _buildMapStyleButton(MapStyle.terrain, '🏔️'),
+        ],
       ),
     );
   }
 
-  Widget _buildStyleChip(MapStyle style, String label) {
+  Widget _buildMapStyleButton(MapStyle style, String emoji) {
     final isSelected = _currentMapStyle == style;
     return GestureDetector(
       onTap: () {
@@ -646,18 +489,12 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isSelected ? NeonColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? NeonColors.primary.withValues(alpha: 0.2) : null,
+          borderRadius: BorderRadius.circular(8),
         ),
-        child: Text(
-          label,
-          style: NeonTypography.labelSmall.copyWith(
-            color: isSelected ? NeonColors.background : NeonColors.textSecondary,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
+        child: Text(emoji, style: const TextStyle(fontSize: 18)),
       ),
     );
   }
