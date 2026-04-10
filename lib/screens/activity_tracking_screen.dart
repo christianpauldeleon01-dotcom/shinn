@@ -134,7 +134,8 @@ class _ActivityTrackingScreenState extends State<ActivityTrackingScreen> {
           _instantPace = _trackingService.formattedInstantPace;
           _currentSpeed = _trackingService.currentSpeed;
           _routePoints = GPSService.coordinatesToLatLng(
-            _trackingService.usedCoordinates,
+            _trackingService.filteredCoordinates,
+            movingOnly: false,
           );
           _currentSplit = _trackingService.splits.length;
         });

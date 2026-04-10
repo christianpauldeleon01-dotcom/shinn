@@ -334,11 +334,13 @@ class GPSService {
   }
 
   /// Convert coordinates to LatLng list for map display
-  static List<LatLng> coordinatesToLatLng(List<Coordinate> coordinates) {
+  /// Only includes coordinates where speed >= movingSpeedThreshold
+  static List<LatLng> coordinatesToLatLng(List<Coordinate> coordinates, {bool movingOnly = true}) {
     return coordinates
         .where((coord) => 
             coord.latitude.isFinite && !coord.latitude.isNaN &&
-            coord.longitude.isFinite && !coord.longitude.isNaN)
+            coord.longitude.isFinite && !coord.longitude.isNaN &&
+            (!movingOnly || (coord.speed ?? 0) >= movingSpeedThreshold))
         .map((coord) => LatLng(coord.latitude, coord.longitude))
         .toList();
   }
