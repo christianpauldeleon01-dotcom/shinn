@@ -525,12 +525,8 @@ class _ActivityPhotoScreenState extends State<ActivityPhotoScreen> {
 
       await Gal.putImage(file.path);
 
-      setState(() {
-        _isCapturing = false;
-      });
-
       if (mounted) {
-        _showSaveSuccessDialog();
+        Navigator.of(context).pop('saved');
       }
     } catch (e) {
       setState(() {
@@ -545,10 +541,10 @@ class _ActivityPhotoScreenState extends State<ActivityPhotoScreen> {
     final directory = await getApplicationDocumentsDirectory();
     final fileName =
         'activity_photo_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    final savedFile = await _imageFile!.copy('${directory.path}/$fileName');
+    await _imageFile!.copy('${directory.path}/$fileName');
 
     if (mounted) {
-      Navigator.of(context).pop(savedFile.path);
+      Navigator.of(context).pop('saved');
     }
   }
 }
